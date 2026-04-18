@@ -3,7 +3,7 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "Kelp Your Neighbor",
-  description: "Connecting communities through local support",
+  description: "Static collaboration scaffold for community event planning",
 };
 
 export default function RootLayout({
