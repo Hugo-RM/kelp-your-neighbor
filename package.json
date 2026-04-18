@@ -1,9 +1,27 @@
 {
+  "name": "kelp-your-neighbor",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
   "dependencies": {
-    "@supabase/ssr": "^0.10.2",
-    "@supabase/supabase-js": "^2.103.3"
+    "@supabase/ssr": "latest",
+    "@supabase/supabase-js": "latest",
+    "@vis.gl/react-google-maps": "latest",
+    "next": "15.0.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
   },
   "devDependencies": {
-    "@types/node": "^25.6.0"
+    "@types/node": "latest",
+    "@types/react": "latest",
+    "@types/react-dom": "latest",
+    "postcss": "latest",
+    "tailwindcss": "latest",
+    "typescript": "latest"
   }
 }
