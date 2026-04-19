@@ -37,18 +37,15 @@
     ]
   },
   "include": [
-    "next-env.d.ts",
-    "declarations.d.ts",
     "**/*.ts",
     "**/*.tsx",
-    ".next/types/**/*.ts"
-  ],
-  "references": [
-    {
-      "path": "./tsconfig.node.json"
-    }
+    "declarations.d.ts",
+    "next-env.d.ts",
+    "next-build/types/**/*.ts"
   ],
   "exclude": [
-    "node_modules"
+    "node_modules",
+    ".next",
+    "next-build"
   ]
 }

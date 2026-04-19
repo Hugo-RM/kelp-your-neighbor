@@ -12,6 +12,7 @@ yarn.lock
 
 # Build outputs
 .next
+next-build
 out
 build
 dist
