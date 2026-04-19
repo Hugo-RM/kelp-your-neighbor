@@ -1,9 +1,18 @@
 'use client'
 
+import { useState } from 'react'
 import { createClient } from '../../utils/supabase/client'
 
 export default function LoginPage() {
+  const [agreed, setAgreed] = useState(false)
+  const [showWarning, setShowWarning] = useState(false)
+
   const handleGoogleLogin = async () => {
+    if (!agreed) {
+      setShowWarning(true)
+      return
+    }
+    setShowWarning(false)
     const supabase = createClient()
     await supabase.auth.signInWithOAuth({
       provider: 'google',
@@ -32,7 +41,7 @@ export default function LoginPage() {
                 <path d="M9 11v4M7 14h4" stroke="#fff" strokeWidth="1.5" strokeLinecap="round" />
               </svg>
             </div>
-            <span className="font-serif text-xl text-white tracking-tight">Carpool</span>
+            <span className="font-serif text-xl text-white tracking-tight">Eventogether</span>
           </div>
 
           {/* Hero text */}
@@ -61,29 +70,64 @@ export default function LoginPage() {
           <h1 className="text-2xl font-normal text-gray-900 mb-1 font-serif tracking-tight">
             Welcome
           </h1>
-          <p className="text-sm text-gray-400 mb-10">Sign in to get started</p>
+          <p className="text-sm text-gray-400 mb-8">Sign in to get started</p>
+
+          {/* Terms checkbox */}
+          <label className="flex items-start gap-2.5 mb-5 cursor-pointer text-left w-full">
+            <input
+              type="checkbox"
+              checked={agreed}
+              onChange={(e) => {
+                setAgreed(e.target.checked)
+                if (e.target.checked) setShowWarning(false)
+              }}
+              className="mt-0.5 h-4 w-4 shrink-0 accent-[#6384ff] cursor-pointer"
+            />
+            <span className="text-xs text-gray-500 leading-relaxed">
+              I agree to the{' '}
+              <a
+                href="/terms"
+                target="_blank"
+                className="text-[#6384ff] hover:underline font-medium"
+              >
+                Terms of Service
+              </a>{' '}
+              and{' '}
+              <a
+                href="/privacy"
+                target="_blank"
+                className="text-[#6384ff] hover:underline font-medium"
+              >
+                Privacy Policy
+              </a>
+            </span>
+          </label>
+
+          {/* Warning message */}
+          {showWarning && (
+            <p className="text-xs text-red-400 mb-4 w-full text-left">
+              Please agree to the Terms of Service and Privacy Policy before continuing.
+            </p>
+          )}
 
           <button
             onClick={handleGoogleLogin}
-            className="w-full flex items-center justify-center gap-3 px-5 py-3 border border-gray-200 rounded-xl text-[15px] font-medium text-gray-800 bg-white hover:bg-gray-50 hover:border-gray-300 hover:shadow-sm active:scale-[0.98] transition-all duration-150"
+            className={`w-full flex items-center justify-center gap-3 px-5 py-3 border rounded-xl text-[15px] font-medium transition-all duration-150 ${
+              agreed
+                ? 'border-gray-200 text-gray-800 bg-white hover:bg-gray-50 hover:border-gray-300 hover:shadow-sm active:scale-[0.98]'
+                : 'border-gray-100 text-gray-300 bg-white cursor-not-allowed'
+            }`}
           >
             <svg width="18" height="18" viewBox="0 0 18 18">
-              <path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844a4.14 4.14 0 01-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z" />
-              <path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 009 18z" />
-              <path fill="#FBBC05" d="M3.964 10.71A5.41 5.41 0 013.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 000 9c0 1.452.348 2.827.957 4.042l3.007-2.332z" />
-              <path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 00.957 4.958L3.964 6.29C4.672 4.163 6.656 3.58 9 3.58z" />
+              <path fill={agreed ? "#4285F4" : "#d1d5db"} d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844a4.14 4.14 0 01-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z" />
+              <path fill={agreed ? "#34A853" : "#d1d5db"} d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 009 18z" />
+              <path fill={agreed ? "#FBBC05" : "#d1d5db"} d="M3.964 10.71A5.41 5.41 0 013.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 000 9c0 1.452.348 2.827.957 4.042l3.007-2.332z" />
+              <path fill={agreed ? "#EA4335" : "#d1d5db"} d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 00.957 4.958L3.964 6.29C4.672 4.163 6.656 3.58 9 3.58z" />
             </svg>
             Continue with Google
           </button>
 
-          <p className="mt-6 text-xs text-gray-400 leading-relaxed max-w-[220px]">
-            By continuing, you agree to our{' '}
-            <a href="#" className="text-[#6384ff] hover:underline">Terms of Service</a>{' '}
-            and{' '}
-            <a href="#" className="text-[#6384ff] hover:underline">Privacy Policy</a>
-          </p>
         </div>
-
       </div>
     </div>
   )
