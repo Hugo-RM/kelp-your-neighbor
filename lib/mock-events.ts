@@ -15,11 +15,7 @@ export type Event = {
 // TODO: remove once Supabase events table is live and getEvents() is swapped
 export const MOCK_EVENTS: Event[] = [
   {
-<<<<<<< HEAD
-    id: "1",
-=======
     id: "mock-1",
->>>>>>> db-to-map
     title: "Example Event",
     type: "Music",
     date: "2025-09-19",

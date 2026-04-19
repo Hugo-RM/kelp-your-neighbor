@@ -489,14 +489,14 @@ export function getVenueCoordinates(venueName: string): { lat: number; lon: numb
   const normalizedInput = venueName.toLowerCase().trim();
 
   // Try exact matches first
-  for (const [, venue] of Object.entries(VENUES)) {
+  for (const venue of Object.values(VENUES)) {
     if (venue.name.toLowerCase() === normalizedInput) {
       return { lat: venue.lat, lon: venue.lon };
     }
   }
 
   // Try partial matches
-  for (const [, venue] of Object.entries(VENUES)) {
+  for (const venue of Object.values(VENUES)) {
     if (
       venue.name.toLowerCase().includes(normalizedInput) ||
       normalizedInput.includes(venue.name.toLowerCase())
