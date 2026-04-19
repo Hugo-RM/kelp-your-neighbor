@@ -23,6 +23,7 @@ export type Carpool = {
     full_name: string | null;
     avatar_url: string | null;
     rating_avg: number;
+    rating_count?: number;
   } | null;
   carpool_requests: CarpoolRequest[];
 };
@@ -70,6 +71,12 @@ export default function CarpoolCard({ carpool, currentUserId, onRefresh }: Props
   const isFull = carpool.available_seats === 0;
   const driverName = carpool.driver?.full_name ?? "Driver";
   const driverRating = carpool.driver?.rating_avg ?? 0;
+  const driverRatingCount = carpool.driver?.rating_count ?? 0;
+
+  // Has the current user ridden with this driver in this carpool?
+  const hasRidden =
+    !isDriver &&
+    myRequest?.status === "accepted";
 
   const join = async () => {
     if (!currentUserId) return;
@@ -145,30 +152,47 @@ export default function CarpoolCard({ carpool, currentUserId, onRefresh }: Props
     >
       {/* Driver row */}
       <div className="flex items-center gap-3 px-4 py-3 border-b border-slate-100">
-        <div className="w-9 h-9 rounded-full bg-emerald-100 flex items-center justify-center shrink-0 overflow-hidden">
-          {carpool.driver?.avatar_url ? (
-            <img
-              src={carpool.driver.avatar_url}
-              alt={driverName}
-              className="w-full h-full object-cover"
-            />
-          ) : (
-            <span className="text-xs font-bold text-emerald-700">
-              {initials(driverName)}
-            </span>
-          )}
-        </div>
-        <div className="flex-1 min-w-0">
-          <p className="text-sm font-semibold text-slate-800 truncate">{driverName}</p>
-          {driverRating > 0 && (
-            <div className="flex items-center gap-0.5 mt-0.5">
-              <Star className="h-3 w-3 text-amber-400 fill-amber-400" />
-              <span className="text-[11px] text-slate-500">
-                {driverRating.toFixed(1)}
+        {/* Clickable driver avatar + name → profile page */}
+        <a
+          href={`/profile/${carpool.driver_id}`}
+          className="flex items-center gap-3 flex-1 min-w-0 group"
+        >
+          <div className="w-9 h-9 rounded-full bg-emerald-100 flex items-center justify-center shrink-0 overflow-hidden">
+            {carpool.driver?.avatar_url ? (
+              <img
+                src={carpool.driver.avatar_url}
+                alt={driverName}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <span className="text-xs font-bold text-emerald-700">
+                {initials(driverName)}
               </span>
-            </div>
-          )}
-        </div>
+            )}
+          </div>
+          <div className="min-w-0">
+            <p className="text-sm font-semibold text-slate-800 truncate group-hover:text-emerald-700 transition-colors">
+              {driverName}
+            </p>
+            {driverRating > 0 ? (
+              <div className="flex items-center gap-1 mt-0.5">
+                <Star className="h-3 w-3 text-amber-400 fill-amber-400" />
+                <span className="text-[11px] text-slate-500">
+                  {driverRating.toFixed(1)}
+                </span>
+                {driverRatingCount > 0 && (
+                  <span className="text-[11px] text-slate-400">
+                    ({driverRatingCount})
+                  </span>
+                )}
+              </div>
+            ) : (
+              <p className="text-[11px] text-slate-400 mt-0.5">No ratings yet</p>
+            )}
+          </div>
+        </a>
+
+        {/* Seats badge */}
         <div
           className={`shrink-0 flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold ${
             isFull
@@ -233,7 +257,7 @@ export default function CarpoolCard({ carpool, currentUserId, onRefresh }: Props
           </div>
         )}
 
-        <div className="flex items-center gap-3 pt-1">
+        <div className="flex items-center gap-3 pt-1 flex-wrap">
           {isDriver && (
             <button
               onClick={cancelOffer}
@@ -243,6 +267,7 @@ export default function CarpoolCard({ carpool, currentUserId, onRefresh }: Props
               Cancel offer
             </button>
           )}
+
           {!isDriver && myRequest?.status === "accepted" && (
             <>
               <button
@@ -252,20 +277,38 @@ export default function CarpoolCard({ carpool, currentUserId, onRefresh }: Props
               >
                 Leave carpool
               </button>
-              <span className="ml-auto text-[11px] text-emerald-600 font-semibold">
+              <span className="text-[11px] text-emerald-600 font-semibold">
                 You're in this ride
               </span>
             </>
           )}
+
           {!isDriver && !myRequest && (
             <button
               onClick={join}
               disabled={loading || isFull || !currentUserId}
-              title={!currentUserId ? "Sign in to join" : isFull ? "No seats left" : undefined}
+              title={
+                !currentUserId
+                  ? "Sign in to join"
+                  : isFull
+                  ? "No seats left"
+                  : undefined
+              }
               className="rounded-xl bg-emerald-600 px-4 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700 disabled:opacity-40 disabled:cursor-not-allowed transition"
             >
               {loading ? "Joining..." : "Request to join"}
             </button>
+          )}
+
+          {/* Rate driver button — only shows if you've ridden with them */}
+          {hasRidden && (
+            <a
+              href={`/profile/${carpool.driver_id}`}
+              className="ml-auto flex items-center gap-1 text-xs font-semibold text-amber-500 hover:text-amber-600 transition"
+            >
+              <Star className="h-3 w-3 fill-amber-400" />
+              Rate driver
+            </a>
           )}
         </div>
       </div>
