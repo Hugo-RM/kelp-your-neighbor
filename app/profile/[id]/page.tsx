@@ -56,27 +56,21 @@ export default function PublicProfilePage({ params }: { params: Promise<{ id: st
       if (profileData) setProfile(profileData)
 
       // Check if current user has carpooled with this driver
+      // Check if current user has carpooled with this driver
       if (user) {
-        const { data: carpoolData } = await supabase
+        const { data: carpoolInfo } = await supabase
           .from('carpool_requests')
-          .select('carpool_id')
+          .select('carpool_id, carpools!inner(id, driver_id)')
           .eq('passenger_id', user.id)
           .eq('status', 'accepted')
+          .eq('carpools.driver_id', id)
           .limit(1)
 
-        if (carpoolData && carpoolData.length > 0) {
-          // Verify this carpool was driven by the profile user
-          const { data: carpoolInfo } = await supabase
-            .from('carpools')
-            .select('id')
-            .eq('id', carpoolData[0].carpool_id)
-            .eq('driver_id', id)
-            .single()
+        console.log('Carpool check:', carpoolInfo)
 
-          if (carpoolInfo) {
-            setHasCarpooledTogether(true)
-            setCarpoolId(carpoolInfo.id)
-          }
+        if (carpoolInfo && carpoolInfo.length > 0) {
+          setHasCarpooledTogether(true)
+          setCarpoolId(carpoolInfo[0].carpool_id)
         }
 
         // Check if user already submitted a rating
