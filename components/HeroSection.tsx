@@ -17,9 +17,9 @@ export default function HeroSection() {
 
       {/* Hero content */}
       <div className="flex flex-col items-center gap-6 max-w-2xl">
-        <span className="w-fit rounded-full border border-emerald-200 bg-white/80 px-4 py-2 text-sm font-medium tracking-wide text-emerald-900 shadow-sm backdrop-blur">
-          Monterey Bay Community
-        </span>
+        <h2 className="text-4xl sm:text-5xl font-bold tracking-tight text-emerald-700">
+          Event2Gther
+        </h2>
         <h1 className="text-5xl sm:text-6xl font-semibold tracking-tight leading-tight">
           Discover events<br />
           <span className="text-emerald-600">near the bay.</span>

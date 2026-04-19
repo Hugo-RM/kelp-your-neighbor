@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Kelp Your Neighbor",
+  title: "Event2gther",
   description: "Static collaboration scaffold for community event planning",
 };
 

@@ -12,7 +12,7 @@ export default function EventCreatePage() {
           </a>
           <div>
             <p className="text-sm uppercase tracking-[0.22em] text-amber-700">
-              Kelp Your Neighbor
+              Event2gther
             </p>
             <h1 className="mt-3 text-4xl font-semibold tracking-tight sm:text-5xl">
               Create a local Event
