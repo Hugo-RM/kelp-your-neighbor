@@ -19,7 +19,11 @@ interface Rating {
   rater_id: string
 }
 
-export default function PublicProfilePage({ params }: { params: { id: string } }) {
+import { use } from 'react'
+
+export default function PublicProfilePage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = use(params)
+  console.log('Profile ID from URL:', id)
   const [profile, setProfile] = useState<Profile | null>(null)
   const [loading, setLoading] = useState(true)
   const [currentUserId, setCurrentUserId] = useState<string | null>(null)
@@ -43,8 +47,11 @@ export default function PublicProfilePage({ params }: { params: { id: string } }
       const { data: profileData } = await supabase
         .from('profiles')
         .select('*')
-        .eq('id', params.id)
+        .eq('id', id)
         .single()
+
+        console.log('Profile data:', profileData)
+        console.log('Profile error:', error)
 
       if (profileData) setProfile(profileData)
 
@@ -63,7 +70,7 @@ export default function PublicProfilePage({ params }: { params: { id: string } }
             .from('carpools')
             .select('id')
             .eq('id', carpoolData[0].carpool_id)
-            .eq('driver_id', params.id)
+            .eq('driver_id', id)
             .single()
 
           if (carpoolInfo) {
@@ -76,7 +83,7 @@ export default function PublicProfilePage({ params }: { params: { id: string } }
         const { data: existingRatingData } = await supabase
           .from('ratings')
           .select('score, rater_id')
-          .eq('driver_id', params.id)
+          .eq('driver_id', id)
           .eq('rater_id', user.id)
           .single()
 
@@ -91,7 +98,7 @@ export default function PublicProfilePage({ params }: { params: { id: string } }
     }
 
     load()
-  }, [params.id])
+  }, [id])
 
   const handleSubmitRating = async () => {
     if (!currentUserId || !carpoolId) return
@@ -103,7 +110,7 @@ export default function PublicProfilePage({ params }: { params: { id: string } }
     const { error: insertError } = await supabase
       .from('ratings')
       .insert({
-        driver_id: params.id,
+        driver_id: id,
         rater_id: currentUserId,
         carpool_id: carpoolId,
         score,
@@ -117,7 +124,7 @@ export default function PublicProfilePage({ params }: { params: { id: string } }
       const { data: updated } = await supabase
         .from('profiles')
         .select('*')
-        .eq('id', params.id)
+        .eq('id', id)
         .single()
       if (updated) setProfile(updated)
     }
@@ -129,7 +136,7 @@ export default function PublicProfilePage({ params }: { params: { id: string } }
     ? profile.full_name.split(' ').map((n) => n[0]).join('').toUpperCase()
     : '?'
 
-  const isOwnProfile = currentUserId === params.id
+  const isOwnProfile = currentUserId === id
 
   if (loading) {
     return (
