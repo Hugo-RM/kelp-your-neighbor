@@ -1,37 +1,59 @@
-export default function Home() {
-  return (
-    <main className="min-h-screen bg-[radial-gradient(circle_at_top,_rgba(34,197,94,0.14),_transparent_34%),linear-gradient(180deg,_#f7faf7_0%,_#eef6ef_100%)] text-slate-900">
-      <div className="mx-auto flex min-h-screen w-full max-w-6xl flex-col justify-center px-6 py-16">
-        <div className="grid gap-8 lg:grid-cols-[1.1fr_0.9fr]">
-          <section className="flex flex-col justify-center gap-6">
-            <span className="w-fit rounded-full border border-emerald-200 bg-white/80 px-4 py-2 text-sm font-medium tracking-wide text-emerald-900 shadow-sm backdrop-blur">
-              Static branch scaffold
-            </span>
-            <div className="space-y-4">
-              <h1 className="max-w-xl text-5xl font-semibold tracking-tight sm:text-6xl">
-                Kelp Your Neighbor
-              </h1>
-              
-            </div>
-            <div className="flex flex-wrap gap-3">
-              <a
-                href="/auth"
-                className="rounded-full bg-emerald-600 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-emerald-600/25 transition hover:bg-emerald-700"
-              >
-                Open login / register
-              </a>
-              <a
-                href="/events/create"
-                className="rounded-full border border-slate-300 bg-white px-6 py-3 text-sm font-semibold text-slate-800 transition hover:border-emerald-300 hover:text-emerald-700"
-              >
-                Open event creation
-              </a>
-            </div>
-          </section>
+"use client";
 
-            
+import dynamic from "next/dynamic";
+import { useState, useCallback, useEffect } from "react";
+import HeroSection from "@/components/HeroSection";
+import FilterBar from "@/components/FilterBar";
+import EventModal from "@/components/EventModal";
+import { getEvents, BoundsFilter } from "@/lib/get-events";
+import { Event } from "@/lib/mock-events";
+
+const EventMap = dynamic(() => import("@/components/EventMap"), { ssr: false });
+
+export default function Home() {
+  const [activeType, setActiveType] = useState("all");
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
+  const [bounds, setBounds] = useState<BoundsFilter | undefined>(undefined);
+  const [events, setEvents] = useState<Event[]>([]);
+  const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
+
+  const fetchEvents = useCallback(async () => {
+    const results = await getEvents({ type: activeType, dateFrom, dateTo, bounds });
+    setEvents(results);
+  }, [activeType, dateFrom, dateTo, bounds]);
+
+  useEffect(() => {
+    fetchEvents();
+  }, [fetchEvents]);
+
+  const handleBoundsChange = useCallback((b: BoundsFilter) => {
+    setBounds(b);
+  }, []);
+
+  return (
+    <main>
+      <HeroSection />
+
+      <section id="map-section" className="flex flex-col" style={{ height: "100vh" }}>
+        <FilterBar
+          activeType={activeType}
+          dateFrom={dateFrom}
+          dateTo={dateTo}
+          onTypeChange={setActiveType}
+          onDateFromChange={setDateFrom}
+          onDateToChange={setDateTo}
+        />
+        <div className="flex-1 relative">
+          <EventMap
+            events={events}
+            onBoundsChange={handleBoundsChange}
+            onPinClick={setSelectedEvent}
+          />
         </div>
-      </div>
+      </section>
+
+      <EventModal event={selectedEvent} onClose={() => setSelectedEvent(null)} />
     </main>
   );
 }
