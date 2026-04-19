@@ -228,7 +228,7 @@ function ZoomAwareMarkers({ events, onPinClick }: { events: Event[]; onPinClick:
         marker.setLatLng([lat, lng]);
       }
     });
-  }, [showAvatars, events, expandedClusterId, zoom]);
+  }, [showAvatars, events, expandedClusterId]); // zoom excluded: showAvatars already captures the threshold
 
   return (
     <>

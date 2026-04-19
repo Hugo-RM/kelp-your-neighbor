@@ -29,7 +29,18 @@ export default function Home() {
   }, [fetchEvents]);
 
   const handleBoundsChange = useCallback((b: BoundsFilter) => {
-    setBounds(b);
+    setBounds((prev) => {
+      if (
+        prev &&
+        prev.swLat === b.swLat &&
+        prev.swLng === b.swLng &&
+        prev.neLat === b.neLat &&
+        prev.neLng === b.neLng
+      ) {
+        return prev;
+      }
+      return b;
+    });
   }, []);
 
   return (

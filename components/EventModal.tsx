@@ -14,7 +14,6 @@ type Props = {
 export default function EventModal({ event, onClose }: Props) {
   const supabase = useMemo(() => createClient(), []);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
-  const [currentUserDisplayName, setCurrentUserDisplayName] = useState("");
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -26,17 +25,7 @@ export default function EventModal({ event, onClose }: Props) {
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
-      if (user) {
-        setCurrentUserId(user.id);
-        setCurrentUserDisplayName(
-          (user.user_metadata?.full_name as string | undefined) ??
-            user.email ??
-            "Anonymous"
-        );
-      } else {
-        setCurrentUserId(null);
-        setCurrentUserDisplayName("");
-      }
+      setCurrentUserId(user ? user.id : null);
     });
   }, [supabase]);
 
@@ -120,7 +109,6 @@ export default function EventModal({ event, onClose }: Props) {
             eventLat={event.lat}
             eventLng={event.lng}
             currentUserId={currentUserId}
-            currentUserDisplayName={currentUserDisplayName}
           />
         </div>
       </div>

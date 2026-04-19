@@ -1,20 +1,12 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import dynamic from "next/dynamic";
-import { MapPin, Search } from "lucide-react";
+import { MapPin, Search, Users, Clock } from "lucide-react";
 import { createClient } from "@/utils/supabase/client";
-import type { FlareMapClientProps } from "@/app/events/create/flare-map-client";
-
-interface LocationState {
-  lat: number;
-  lng: number;
-}
 
 interface LocationSuggestion {
   id: string;
-  name: string;
-  city: string;
+  label: string;
   lat: number;
   lng: number;
 }
@@ -22,34 +14,22 @@ interface LocationSuggestion {
 interface PhotonFeature {
   properties: {
     name?: string;
+    street?: string;
+    housenumber?: string;
     city?: string;
     town?: string;
     village?: string;
     county?: string;
     state?: string;
-    street?: string;
   };
   geometry: { coordinates: [number, number] };
 }
 
-const DEFAULT_LOCATION: LocationState = { lat: 36.6548, lng: -121.802 };
-
-const PickupMap = dynamic<FlareMapClientProps>(
-  () => import("@/app/events/create/flare-map-client").then((m) => m.default),
-  {
-    ssr: false,
-    loading: () => (
-      <div className="flex h-[240px] items-center justify-center rounded-xl border border-slate-100 bg-white text-sm text-slate-400">
-        Loading map...
-      </div>
-    ),
-  }
-);
+const DEFAULT_BIAS = { lat: 36.6548, lng: -121.802 };
 
 type Props = {
   eventId: string;
   userId: string;
-  userDisplayName: string;
   onSuccess: () => void;
   onCancel: () => void;
 };
@@ -57,26 +37,27 @@ type Props = {
 export default function CarpoolHostForm({
   eventId,
   userId,
-  userDisplayName,
   onSuccess,
   onCancel,
 }: Props) {
   const supabase = useMemo(() => createClient(), []);
 
-  const [location, setLocation] = useState<LocationState>(DEFAULT_LOCATION);
-  const [pickupAddress, setPickupAddress] = useState("");
-  const [searchQuery, setSearchQuery] = useState("");
+  const [query, setQuery] = useState("");
   const [suggestions, setSuggestions] = useState<LocationSuggestion[]>([]);
   const [searching, setSearching] = useState(false);
+  const [selected, setSelected] = useState<LocationSuggestion | null>(null);
+  const [showDropdown, setShowDropdown] = useState(false);
+
   const [seats, setSeats] = useState(3);
+  const [departureTime, setDepartureTime] = useState("");
   const [notes, setNotes] = useState("");
+
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Photon autocomplete
   useEffect(() => {
-    const query = searchQuery.trim();
-    if (!query) {
+    const q = query.trim();
+    if (!q || selected) {
       setSuggestions([]);
       return;
     }
@@ -86,32 +67,36 @@ export default function CarpoolHostForm({
       setSearching(true);
       try {
         const params = new URLSearchParams({
-          q: query,
-          lat: String(DEFAULT_LOCATION.lat),
-          lon: String(DEFAULT_LOCATION.lng),
-          limit: "5",
+          q,
+          lat: String(DEFAULT_BIAS.lat),
+          lon: String(DEFAULT_BIAS.lng),
+          limit: "6",
         });
-        const res = await fetch(
-          `https://photon.komoot.io/api/?${params.toString()}`,
-          { signal: controller.signal }
-        );
+        const res = await fetch(`https://photon.komoot.io/api/?${params}`, {
+          signal: controller.signal,
+        });
         if (!res.ok) throw new Error();
         const data = (await res.json()) as { features?: PhotonFeature[] };
+
         setSuggestions(
           (data.features ?? []).map((f, i) => {
             const [lng, lat] = f.geometry.coordinates;
+            const p = f.properties;
             const name =
-              f.properties.name ?? f.properties.street ?? "Unnamed place";
+              [p.housenumber, p.street].filter(Boolean).join(" ") ||
+              p.name ||
+              "Unnamed place";
             const city =
-              f.properties.city ??
-              f.properties.town ??
-              f.properties.village ??
-              f.properties.county ??
-              f.properties.state ??
-              "Monterey";
-            return { id: `${name}-${city}-${lng}-${lat}-${i}`, name, city, lat, lng };
+              p.city ?? p.town ?? p.village ?? p.county ?? p.state ?? "";
+            return {
+              id: `${name}-${city}-${lng}-${lat}-${i}`,
+              label: city ? `${name}, ${city}` : name,
+              lat,
+              lng,
+            };
           })
         );
+        setShowDropdown(true);
       } catch {
         if (!controller.signal.aborted) setSuggestions([]);
       } finally {
@@ -123,40 +108,18 @@ export default function CarpoolHostForm({
       controller.abort();
       window.clearTimeout(timeout);
     };
-  }, [searchQuery]);
+  }, [query, selected]);
 
-  // Nominatim reverse geocode for address display
-  useEffect(() => {
-    let cancelled = false;
-    const timeout = window.setTimeout(async () => {
-      try {
-        const params = new URLSearchParams({
-          lat: String(location.lat),
-          lon: String(location.lng),
-          format: "json",
-          zoom: "18",
-          addressdetails: "1",
-        });
-        const res = await fetch(
-          `https://nominatim.openstreetmap.org/reverse?${params.toString()}`
-        );
-        if (!res.ok) return;
-        const result = (await res.json()) as { display_name?: string };
-        if (!cancelled)
-          setPickupAddress(result.display_name ?? "Unknown address");
-      } catch {
-        if (!cancelled) setPickupAddress("Address unavailable");
-      }
-    }, 350);
-    return () => {
-      cancelled = true;
-      window.clearTimeout(timeout);
-    };
-  }, [location.lat, location.lng]);
+  const pick = (s: LocationSuggestion) => {
+    setSelected(s);
+    setQuery(s.label);
+    setSuggestions([]);
+    setShowDropdown(false);
+  };
 
-  const selectSuggestion = (s: LocationSuggestion) => {
-    setLocation({ lat: s.lat, lng: s.lng });
-    setSearchQuery(`${s.name}, ${s.city}`);
+  const clearSelection = () => {
+    setSelected(null);
+    setQuery("");
     setSuggestions([]);
   };
 
@@ -164,8 +127,12 @@ export default function CarpoolHostForm({
     e.preventDefault();
     setError(null);
 
-    if (!pickupAddress) {
-      setError("Pick a pickup location on the map.");
+    if (!selected) {
+      setError("Choose a pickup location from the search results.");
+      return;
+    }
+    if (!departureTime) {
+      setError("Add a departure time so riders know when to be ready.");
       return;
     }
 
@@ -173,13 +140,10 @@ export default function CarpoolHostForm({
     try {
       const { error: insertError } = await supabase.from("carpools").insert({
         event_id: eventId,
-        host_user_id: userId,
-        host_display_name: userDisplayName,
-        pickup_lat: location.lat,
-        pickup_lng: location.lng,
-        pickup_address: pickupAddress,
-        seats_total: seats,
-        seats_available: seats,
+        driver_id: userId,
+        pickup_location: selected.label,
+        available_seats: seats,
+        departure_time: new Date(departureTime).toISOString(),
         notes: notes.trim() || null,
       });
 
@@ -187,7 +151,6 @@ export default function CarpoolHostForm({
         setError(insertError.message);
         return;
       }
-
       onSuccess();
     } finally {
       setSubmitting(false);
@@ -195,99 +158,149 @@ export default function CarpoolHostForm({
   };
 
   return (
-    <form
-      onSubmit={handleSubmit}
-      className="rounded-xl border border-emerald-100 bg-emerald-50/40 p-4 flex flex-col gap-3"
-    >
-      <p className="text-sm font-semibold text-slate-800">Offer a ride</p>
+    <form onSubmit={handleSubmit} className="flex flex-col gap-4 pt-1">
+      {/* Pickup location */}
+      <div className="flex flex-col gap-1.5">
+        <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
+          Pickup location
+        </label>
+        <div className="relative">
+          <div
+            className={`flex items-center gap-2.5 rounded-xl border bg-white px-3.5 py-2.5 transition ${
+              showDropdown && suggestions.length > 0
+                ? "border-emerald-400 ring-2 ring-emerald-100"
+                : "border-slate-200"
+            }`}
+          >
+            {selected ? (
+              <MapPin className="h-4 w-4 shrink-0 text-emerald-500" />
+            ) : (
+              <Search className="h-4 w-4 shrink-0 text-slate-400" />
+            )}
+            <input
+              type="text"
+              value={query}
+              onChange={(e) => {
+                if (selected) clearSelection();
+                setQuery(e.target.value);
+                setShowDropdown(true);
+              }}
+              onFocus={() => suggestions.length > 0 && setShowDropdown(true)}
+              onBlur={() => setTimeout(() => setShowDropdown(false), 150)}
+              placeholder="Search your pickup spot..."
+              className="flex-1 text-sm text-slate-800 placeholder:text-slate-400 outline-none bg-transparent"
+            />
+            {searching && (
+              <span className="text-[11px] text-slate-400 shrink-0">Searching...</span>
+            )}
+            {selected && (
+              <button
+                type="button"
+                onClick={clearSelection}
+                className="shrink-0 w-5 h-5 flex items-center justify-center rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200 transition text-xs leading-none"
+              >
+                &times;
+              </button>
+            )}
+          </div>
 
-      {/* Location search */}
-      <div className="relative">
-        <div className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2">
-          <Search className="h-3.5 w-3.5 shrink-0 text-slate-400" />
-          <input
-            type="text"
-            placeholder="Search pickup location…"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="flex-1 text-sm text-slate-800 placeholder:text-slate-400 outline-none bg-transparent"
-          />
-          {searching && (
-            <span className="text-xs text-slate-400">Searching…</span>
+          {showDropdown && suggestions.length > 0 && (
+            <ul className="absolute z-20 mt-1.5 w-full rounded-xl border border-slate-200 bg-white shadow-xl overflow-hidden">
+              {suggestions.map((s) => (
+                <li key={s.id}>
+                  <button
+                    type="button"
+                    onMouseDown={() => pick(s)}
+                    className="flex w-full items-center gap-3 px-4 py-3 text-left hover:bg-slate-50 transition border-b border-slate-50 last:border-0"
+                  >
+                    <MapPin className="h-3.5 w-3.5 shrink-0 text-slate-400" />
+                    <span className="text-sm text-slate-700 leading-snug">{s.label}</span>
+                  </button>
+                </li>
+              ))}
+            </ul>
           )}
         </div>
-        {suggestions.length > 0 && (
-          <ul className="absolute z-10 mt-1 w-full rounded-lg border border-slate-200 bg-white shadow-lg overflow-hidden">
-            {suggestions.map((s) => (
-              <li key={s.id}>
-                <button
-                  type="button"
-                  onClick={() => selectSuggestion(s)}
-                  className="flex w-full items-start gap-2 px-3 py-2.5 text-left hover:bg-slate-50 transition"
-                >
-                  <MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0 text-slate-400" />
-                  <span className="text-sm text-slate-700">
-                    {s.name}
-                    <span className="text-slate-400">, {s.city}</span>
-                  </span>
-                </button>
-              </li>
-            ))}
-          </ul>
-        )}
       </div>
 
-      {/* Map */}
-      <div className="rounded-xl overflow-hidden border border-slate-200">
-        <PickupMap location={location} onLocationChange={setLocation} />
-      </div>
+      {/* Departure time + Seats */}
+      <div className="grid grid-cols-2 gap-3">
+        <div className="flex flex-col gap-1.5">
+          <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
+            Departing at
+          </label>
+          <div className="flex items-center gap-2.5 rounded-xl border border-slate-200 bg-white px-3.5 py-2.5">
+            <Clock className="h-4 w-4 shrink-0 text-slate-400" />
+            <input
+              type="datetime-local"
+              value={departureTime}
+              onChange={(e) => setDepartureTime(e.target.value)}
+              className="flex-1 text-sm text-slate-800 outline-none bg-transparent"
+            />
+          </div>
+        </div>
 
-      {pickupAddress && (
-        <p className="text-xs text-slate-500 flex gap-1 items-start">
-          <MapPin className="mt-0.5 h-3 w-3 shrink-0 text-slate-400" />
-          {pickupAddress}
-        </p>
-      )}
-
-      {/* Seats */}
-      <div className="flex items-center gap-3">
-        <label className="text-sm text-slate-700 font-medium shrink-0">
-          Seats available
-        </label>
-        <input
-          type="number"
-          min={1}
-          max={7}
-          value={seats}
-          onChange={(e) => setSeats(Math.min(7, Math.max(1, Number(e.target.value))))}
-          className="w-16 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm text-center text-slate-800 outline-none focus:ring-2 focus:ring-emerald-300"
-        />
+        <div className="flex flex-col gap-1.5">
+          <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
+            Seats available
+          </label>
+          <div className="flex items-center justify-between rounded-xl border border-slate-200 bg-white px-3 py-2.5">
+            <button
+              type="button"
+              onClick={() => setSeats((s) => Math.max(1, s - 1))}
+              className="w-7 h-7 rounded-full border border-slate-200 flex items-center justify-center text-slate-600 hover:bg-slate-50 transition text-base font-medium leading-none"
+            >
+              -
+            </button>
+            <div className="flex items-center gap-1.5">
+              <Users className="h-3.5 w-3.5 text-slate-400" />
+              <span className="text-sm font-semibold text-slate-800 w-4 text-center tabular-nums">
+                {seats}
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={() => setSeats((s) => Math.min(7, s + 1))}
+              className="w-7 h-7 rounded-full border border-slate-200 flex items-center justify-center text-slate-600 hover:bg-slate-50 transition text-base font-medium leading-none"
+            >
+              +
+            </button>
+          </div>
+        </div>
       </div>
 
       {/* Notes */}
-      <textarea
-        placeholder="Notes (optional) — e.g. Leaving at 6 PM from the Trader Joe's lot"
-        value={notes}
-        onChange={(e) => setNotes(e.target.value)}
-        rows={2}
-        className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 outline-none focus:ring-2 focus:ring-emerald-300 resize-none"
-      />
+      <div className="flex flex-col gap-1.5">
+        <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
+          Notes{" "}
+          <span className="normal-case font-normal text-slate-400">(optional)</span>
+        </label>
+        <textarea
+          value={notes}
+          onChange={(e) => setNotes(e.target.value)}
+          placeholder="e.g. Meet at the north entrance of Trader Joe's"
+          rows={2}
+          className="rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-800 placeholder:text-slate-400 outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100 transition resize-none"
+        />
+      </div>
 
-      {error && <p className="text-xs text-red-500">{error}</p>}
+      {error && (
+        <p className="text-xs text-red-500 bg-red-50 rounded-lg px-3 py-2">{error}</p>
+      )}
 
       <div className="flex gap-2">
         <button
           type="submit"
           disabled={submitting}
-          className="rounded-full bg-emerald-600 px-4 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700 disabled:opacity-50 transition"
+          className="flex-1 rounded-xl bg-emerald-600 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50 transition"
         >
-          {submitting ? "Offering…" : "Offer ride"}
+          {submitting ? "Posting..." : "Post ride"}
         </button>
         <button
           type="button"
           onClick={onCancel}
           disabled={submitting}
-          className="rounded-full border border-slate-300 px-4 py-1.5 text-xs font-semibold text-slate-500 hover:bg-slate-50 disabled:opacity-50 transition"
+          className="rounded-xl border border-slate-200 px-5 py-2.5 text-sm font-semibold text-slate-600 hover:bg-slate-50 disabled:opacity-50 transition"
         >
           Cancel
         </button>
