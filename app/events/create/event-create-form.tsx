@@ -139,6 +139,7 @@ export default function EventCreateForm() {
   const [locationSearchMessage, setLocationSearchMessage] = useState<string>("Map defaults to Monterey / Seaside.");
   const [locationSuggestions, setLocationSuggestions] = useState<LocationSuggestion[]>([]);
   const [isLocationSearching, setIsLocationSearching] = useState(false);
+  const [isLocationSearchFocused, setIsLocationSearchFocused] = useState(false);
   const [nearestAddress, setNearestAddress] = useState<string>("Resolving nearest address...");
   const [selectedImageFile, setSelectedImageFile] = useState<File | null>(null);
   const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null);
@@ -308,6 +309,7 @@ export default function EventCreateForm() {
     setLocationSearchQuery(formatLocationLabel(suggestion));
     setLocationSuggestions([]);
     setLocationSearchMessage(`Selected ${formatLocationLabel(suggestion)}.`);
+    setIsLocationSearchFocused(false);
   };
 
   useEffect(() => {
@@ -748,13 +750,15 @@ export default function EventCreateForm() {
                 id="location-search"
                 value={locationSearchQuery}
                 onChange={(event) => setLocationSearchQuery(event.target.value)}
+                onFocus={() => setIsLocationSearchFocused(true)}
+                onBlur={() => setTimeout(() => setIsLocationSearchFocused(false), 100)}
                 type="text"
                 placeholder="Search Monterey addresses"
                 className="w-full rounded-2xl border border-slate-200 bg-white py-3 pl-10 pr-4 text-sm text-slate-900 outline-none ring-amber-300 transition focus:ring-2"
               />
             </div>
 
-            {locationSearchQuery.trim() ? (
+            {isLocationSearchFocused ? (
               <div className="absolute left-0 right-0 top-full z-40 mt-2 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl shadow-slate-900/10">
                 {isLocationSearching ? (
                   <div className="flex items-center gap-2 px-4 py-3 text-sm text-slate-500">
