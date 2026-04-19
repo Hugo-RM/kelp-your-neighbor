@@ -1,6 +1,18 @@
 'use client'
 
+import { useEffect, useState } from 'react'
 import { createClient } from '../../utils/supabase/client'
+
+const [isLoggedIn, setIsLoggedIn] = useState(false)
+
+useEffect(() => {
+  const checkUser = async () => {
+    const supabase = createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    setIsLoggedIn(!!user)
+  }
+  checkUser()
+}, [])
 
 export default function LoginPage() {
   const handleGoogleLogin = async () => {
@@ -11,6 +23,12 @@ export default function LoginPage() {
         redirectTo: `${window.location.origin}/auth/callback`,
       },
     })
+  }
+
+  const handleSignOut = async () => {
+    const supabase = createClient()
+    await supabase.auth.signOut()
+    window.location.replace("/")
   }
 
   return (
@@ -75,6 +93,17 @@ export default function LoginPage() {
             </svg>
             Continue with Google
           </button>
+
+          {/* Sign out button */}
+          {isLoggedIn && (
+  <button
+    onClick={handleSignOut}
+    className="w-full flex items-center justify-center gap-3 px-5 py-3 border border-gray-200 rounded-xl text-[15px] font-medium text-red-500 bg-white hover:bg-red-50 hover:border-red-200 active:scale-[0.98] transition-all duration-150 mt-3"
+  >
+    Sign out
+  </button>
+)}
+
 
           <p className="mt-6 text-xs text-gray-400 leading-relaxed max-w-[220px]">
             By continuing, you agree to our{' '}
