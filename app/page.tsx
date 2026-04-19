@@ -36,7 +36,7 @@ export default function Home() {
     <main>
       <HeroSection />
 
-      <section id="map-section" className="flex flex-col" style={{ height: "100vh" }}>
+      <section id="map-section" className="flex flex-col relative" style={{ height: "100vh" }}>
         <FilterBar
           activeType={activeType}
           dateFrom={dateFrom}

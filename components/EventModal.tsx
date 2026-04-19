@@ -1,7 +1,7 @@
 "use client";
 
-import { Event } from "@/lib/mock-events";
-import { TYPE_COLORS } from "@/lib/event-colors";
+import { Event } from "../lib/mock-events";
+import { TYPE_COLORS } from "../lib/event-colors";
 import { useEffect } from "react";
 
 type Props = {
@@ -70,7 +70,7 @@ export default function EventModal({ event, onClose }: Props) {
           <div className="flex flex-col gap-1 text-sm text-slate-500">
             <span>{new Date(event.date + "T00:00:00").toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}</span>
             <span>{event.location}</span>
-            <span>Created by {event.createdBy}</span>
+            {/* <span>Created by {event.createdBy}</span> */}
           </div>
 
           {/* Overview */}
