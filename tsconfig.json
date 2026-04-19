@@ -26,6 +26,7 @@
     "ignoreDeprecations": "6.0",
     "allowJs": true,
     "noEmit": true,
+    "rootDir": ".",
     "incremental": true,
     "moduleResolution": "node",
     "resolveJsonModule": true,
@@ -35,6 +36,12 @@
         "name": "next"
       }
     ]
+  },
+  "ts-node": {
+    "compilerOptions": {
+      "module": "commonjs",
+      "skipLibCheck": true
+    }
   },
   "include": [
     "next-env.d.ts",
