@@ -119,6 +119,20 @@ export default function CarpoolCard({ carpool, currentUserId, onRefresh }: Props
     }
   };
 
+  const removeRider = async (request: CarpoolRequest) => {
+    setLoading(true);
+    try {
+      await supabase.from("carpool_requests").delete().eq("id", request.id);
+      await supabase
+        .from("carpools")
+        .update({ available_seats: carpool.available_seats + 1 })
+        .eq("id", carpool.id);
+      onRefresh();
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const formattedTime = formatDepartureTime(carpool.departure_time);
 
   return (
@@ -193,7 +207,7 @@ export default function CarpoolCard({ carpool, currentUserId, onRefresh }: Props
             {acceptedRiders.map((r) => (
               <div
                 key={r.id}
-                className="flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 pl-1 pr-2.5 py-0.5"
+                className="flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 pl-1 pr-2 py-0.5"
               >
                 <div className="w-4 h-4 rounded-full bg-slate-300 flex items-center justify-center">
                   <span className="text-[9px] font-bold text-slate-600">
@@ -203,6 +217,17 @@ export default function CarpoolCard({ carpool, currentUserId, onRefresh }: Props
                 <span className="text-[11px] text-slate-600">
                   {r.passenger?.full_name ?? "Rider"}
                 </span>
+                {isDriver && (
+                  <button
+                    type="button"
+                    onClick={() => removeRider(r)}
+                    disabled={loading}
+                    className="w-3.5 h-3.5 flex items-center justify-center rounded-full bg-slate-200 text-slate-500 hover:bg-red-100 hover:text-red-500 transition text-[10px] leading-none disabled:opacity-50"
+                    title="Remove rider"
+                  >
+                    &times;
+                  </button>
+                )}
               </div>
             ))}
           </div>
