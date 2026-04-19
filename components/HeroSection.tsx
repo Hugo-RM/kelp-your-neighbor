@@ -9,8 +9,8 @@ export default function HeroSection() {
     <section className="relative flex h-screen flex-col items-center justify-center bg-[radial-gradient(circle_at_top,_rgba(34,197,94,0.14),_transparent_34%),linear-gradient(180deg,_#f7faf7_0%,_#eef6ef_100%)] text-slate-900 text-center px-6">
       {/* Nav */}
       <nav className="absolute top-0 left-0 right-0 flex items-center justify-between px-8 py-5">
-        <span className="text-lg font-bold tracking-tight text-emerald-800">Kelp Your Neighbor</span>
-        <a href="/login" className="rounded-full bg-emerald-600 px-5 py-2 text-sm font-semibold text-white shadow-md shadow-emerald-600/25 transition hover:bg-emerald-700">
+        <span className="text-lg font-bold tracking-tight text-emerald-800">Eventogether</span>
+        <a href="/auth" className="rounded-full bg-emerald-600 px-5 py-2 text-sm font-semibold text-white shadow-md shadow-emerald-600/25 transition hover:bg-emerald-700">
           Login
         </a>
       </nav>
@@ -18,7 +18,7 @@ export default function HeroSection() {
       {/* Hero content */}
       <div className="flex flex-col items-center gap-6 max-w-2xl">
         <span className="w-fit rounded-full border border-emerald-200 bg-white/80 px-4 py-2 text-sm font-medium tracking-wide text-emerald-900 shadow-sm backdrop-blur">
-          Monterey Bay Community
+          Monterey County Community
         </span>
         <h1 className="text-5xl sm:text-6xl font-semibold tracking-tight leading-tight">
           Discover events<br />

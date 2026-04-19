@@ -32,7 +32,7 @@ export default function LoginPage() {
                 <path d="M9 11v4M7 14h4" stroke="#fff" strokeWidth="1.5" strokeLinecap="round" />
               </svg>
             </div>
-            <span className="font-serif text-xl text-white tracking-tight">Carpool</span>
+            <span className="font-serif text-xl text-white tracking-tight">Eventogether</span>
           </div>
 
           {/* Hero text */}
