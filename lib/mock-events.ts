@@ -1,5 +1,5 @@
 export type Event = {
-  id: number;
+  id: string;
   title: string;
   type: string;
   date: string; // ISO date string e.g. "2025-10-05"
@@ -15,7 +15,7 @@ export type Event = {
 // TODO: remove once Supabase events table is live and getEvents() is swapped
 export const MOCK_EVENTS: Event[] = [
   {
-    id: 1,
+    id: "mock-1",
     title: "Example Event",
     type: "Music",
     date: "2025-09-19",
