@@ -2,6 +2,7 @@
 
 import { Event } from "@/lib/mock-events";
 import { TYPE_COLORS } from "@/lib/event-colors";
+import { MapPin } from "lucide-react";
 
 type Props = {
   events: Event[];
@@ -10,58 +11,105 @@ type Props = {
 };
 
 export default function EventSidebar({ events, selectedEvent, onEventClick }: Props) {
+  // Filter events to only show those after today
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const filteredEvents = events.filter((event) => {
+    const eventDate = new Date(event.date + "T00:00:00");
+    return eventDate >= today;
+  });
+
   return (
-    <div className="w-80 flex flex-col border-l border-slate-200 bg-white overflow-hidden">
+    <div className="w-[420px] flex flex-col border-l border-slate-200 bg-white overflow-hidden">
+      {/* Header */}
       <div className="px-4 py-3 border-b border-slate-100 shrink-0">
         <span className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
-          {events.length} event{events.length !== 1 ? "s" : ""}
+          {filteredEvents.length} event{filteredEvents.length !== 1 ? "s" : ""}
         </span>
       </div>
 
-      <div className="flex-1 overflow-y-auto">
-        {events.length === 0 ? (
+      {/* Scrollable Cards Container - Hidden Scrollbar */}
+      <div className="flex-1 overflow-y-auto scrollbar-hide">
+        <style>{`
+          .scrollbar-hide {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+          }
+          .scrollbar-hide::-webkit-scrollbar {
+            display: none;
+          }
+        `}</style>
+
+        {filteredEvents.length === 0 ? (
           <p className="px-4 py-6 text-sm text-slate-400 text-center">No events in this area.</p>
         ) : (
-          <ul className="divide-y divide-slate-100">
-            {events.map((event) => {
-              const color = TYPE_COLORS[event.type] ?? TYPE_COLORS["default"];
+          <div className="flex flex-col gap-3 p-4">
+            {filteredEvents.map((event) => {
               const isSelected = selectedEvent?.id === event.id;
+              const formattedDate = new Date(event.date + "T00:00:00").toLocaleDateString(
+                "en-US",
+                {
+                  month: "short",
+                  day: "numeric",
+                  year: "numeric",
+                }
+              );
+
               return (
-                <li key={event.id}>
-                  <button
-                    onClick={() => onEventClick(event)}
-                    className={`w-full text-left px-4 py-3 flex gap-3 items-start transition hover:bg-slate-50 ${
-                      isSelected ? "bg-emerald-50" : ""
-                    }`}
-                  >
-                    <span
-                      className="mt-1 shrink-0 w-2.5 h-2.5 rounded-full"
-                      style={{ backgroundColor: color }}
-                    />
-                    <div className="min-w-0 flex-1">
-                      <p className="text-sm font-medium text-slate-800 truncate leading-snug">
-                        {event.title}
-                      </p>
-                      <p className="text-xs text-slate-400 mt-0.5 truncate">
-                        {new Date(event.date + "T00:00:00").toLocaleDateString("en-US", {
-                          month: "short",
-                          day: "numeric",
-                          year: "numeric",
-                        })}
-                        {event.location ? ` · ${event.location}` : ""}
-                      </p>
+                <button
+                  key={event.id}
+                  onClick={() => onEventClick(event)}
+                  className={`group relative flex flex-col overflow-hidden rounded-3xl transition-all duration-300 ease-out backdrop-blur-md hover:scale-102 focus:outline-none focus:ring-2 focus:ring-emerald-500 ${
+                    isSelected
+                      ? "bg-white/40 border border-white/60 shadow-lg scale-102"
+                      : "bg-white/20 border border-white/30 hover:bg-white/30 hover:border-white/40"
+                  }`}
+                >
+                  {/* Image Container */}
+                  {event.picture ? (
+                    <div className="relative w-full h-40 overflow-hidden bg-gradient-to-br from-slate-200 to-slate-300">
+                      <img
+                        src={event.picture}
+                        alt={event.title}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      />
                     </div>
-                    <span
-                      className="shrink-0 mt-0.5 rounded-full px-2 py-0.5 text-[10px] font-semibold text-white leading-none"
-                      style={{ backgroundColor: color }}
-                    >
-                      {event.type}
-                    </span>
-                  </button>
-                </li>
+                  ) : (
+                    <div className="w-full h-40 bg-gradient-to-br from-slate-200 to-slate-300" />
+                  )}
+
+                  {/* Content Container */}
+                  <div className="flex flex-col gap-2 p-3">
+                    {/* Title */}
+                    <h3 className="font-bold text-sm text-slate-900 leading-tight line-clamp-2">
+                      {event.title}
+                    </h3>
+
+                    {/* Overview - Max 2 lines */}
+                    {event.overview && (
+                      <p className="text-xs text-slate-700 leading-relaxed line-clamp-2">
+                        {event.overview}
+                      </p>
+                    )}
+
+                    {/* Meta Information */}
+                    <div className="flex flex-col gap-1 pt-1">
+                      {/* Date */}
+                      <p className="text-xs text-slate-600">{formattedDate}</p>
+
+                      {/* Venue with Icon */}
+                      {event.location && (
+                        <div className="flex items-center justify-center gap-1 text-xs text-slate-600">
+                          <MapPin size={12} className="shrink-0" />
+                          <span className="truncate">{event.location}</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </button>
               );
             })}
-          </ul>
+          </div>
         )}
       </div>
     </div>
