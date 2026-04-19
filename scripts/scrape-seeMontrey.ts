@@ -298,7 +298,7 @@ async function upsertEvents(events: ScrapedEvent[]): Promise<void> {
       };
 
       // Upsert into events table
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('events')
         .upsert([eventData], { onConflict: 'external_id' });
 
