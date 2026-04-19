@@ -424,7 +424,7 @@ export default function EventCreateForm() {
       event_date: startTimeDate.toISOString().split("T")[0],
       start_time: startTimeDate.toISOString(),
       location: `POINT(${values.location.lng} ${values.location.lat})`,
-      creator_id: user,
+      creator_id: user.id,
       external_id: 'local',
     });
     if (error) {
@@ -516,6 +516,15 @@ export default function EventCreateForm() {
                     {suggestedTag}
                   </button>
                 ))}
+                {tagInput.trim() && !matchingCategorySuggestions.some(tag => tag.toLowerCase() === normalizeTag(tagInput).toLowerCase()) && (
+                  <button
+                    type="button"
+                    onClick={() => addTag(tagInput)}
+                    className="rounded-full border border-amber-400 bg-amber-50 px-3 py-1 text-xs font-medium text-amber-700 transition hover:bg-amber-100"
+                  >
+                    + Create "{normalizeTag(tagInput)}"
+                  </button>
+                )}
               </div>
 
               <div className="rounded-2xl border border-slate-200 bg-slate-50 px-3 py-3 focus-within:ring-2 focus-within:ring-amber-300">
@@ -532,7 +541,7 @@ export default function EventCreateForm() {
                       }
                     }}
                     type="text"
-                    placeholder="Type a category tag, then press Enter or comma"
+                    placeholder="Type a tag (official or custom), then press Enter"
                     className="w-full bg-transparent py-1 text-sm text-slate-900 outline-none placeholder:text-slate-500"
                   />
                 </div>
@@ -557,7 +566,7 @@ export default function EventCreateForm() {
                 </div>
               </div>
               <p className="mt-2 text-xs text-slate-500">
-                Choose one or more official event tags. The autocomplete above shows the closest matches as you type.
+                Choose from suggested tags or create your own. Press Enter or comma to add any tag.
               </p>
             </div>
           </div>
