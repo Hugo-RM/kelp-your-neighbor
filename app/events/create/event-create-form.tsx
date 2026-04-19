@@ -448,12 +448,9 @@ export default function EventCreateForm() {
       <section className="rounded-[2rem] border border-white/70 bg-white/90 p-6 shadow-[0_20px_70px_rgba(15,23,42,0.10)] backdrop-blur">
         <div className="mb-6 flex items-center justify-between">
           <div>
-            <p className="text-sm font-medium text-amber-700">Flare details</p>
             <h2 className="text-2xl font-semibold">Event information</h2>
           </div>
-          <span className="rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-800">
-            Community-first
-          </span>
+          
         </div>
 
         <form id={EVENT_FORM_ID} action={createFlare} className="space-y-5">

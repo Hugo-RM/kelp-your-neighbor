@@ -12,14 +12,13 @@ export default function EventCreatePage() {
           </a>
           <div>
             <p className="text-sm uppercase tracking-[0.22em] text-amber-700">
-              Community flare form
+              Kelp Your Neighbor
             </p>
             <h1 className="mt-3 text-4xl font-semibold tracking-tight sm:text-5xl">
-              Create a neighborhood flare
+              Create a local Event
             </h1>
             <p className="mt-3 max-w-2xl text-base leading-7 text-slate-600 sm:text-lg">
-              This form is ready for production wiring with Supabase and a map-based
-              location picker.
+              
             </p>
           </div>
         </div>
