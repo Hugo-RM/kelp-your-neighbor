@@ -1,6 +1,6 @@
 "use client";
 
-const EVENT_TYPES = ["All", "Music", "Sports", "Food", "Culture", "Community Event", "Cars & Coffee", "Gaming"];
+const EVENT_TYPES = ["All", "Concert", "Food","Community", "Event", "OutDoors", "Networking"];
 
 type Props = {
   activeType: string;

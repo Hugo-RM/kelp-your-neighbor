@@ -20,6 +20,7 @@ interface CreateFlareFormValues {
   start_time: string;
   location: LocationState;
   tags: string[];
+  image_url?: string;
 }
 
 interface FormFieldErrors {
@@ -111,17 +112,17 @@ const FlareLocationMap = dynamic<FlareMapClientProps>(
   }
 );
 
-function SubmitButton({ formId }: { formId?: string }) {
+function SubmitButton({ formId, isUploadingImage }: { formId?: string; isUploadingImage?: boolean }) {
   const { pending } = useFormStatus();
 
   return (
     <button
       type="submit"
       form={formId}
-      disabled={pending}
+      disabled={pending || isUploadingImage}
       className="w-full rounded-2xl bg-amber-500 px-4 py-3.5 text-sm font-semibold text-slate-950 shadow-lg shadow-amber-400/35 transition hover:bg-amber-400 disabled:cursor-not-allowed disabled:opacity-70 animate-[pulse_2.4s_ease-in-out_infinite]"
     >
-      {pending ? "Creating event..." : "Create event"}
+      {pending || isUploadingImage ? "Creating event..." : "Create event"}
     </button>
   );
 }
@@ -139,6 +140,10 @@ export default function EventCreateForm() {
   const [locationSuggestions, setLocationSuggestions] = useState<LocationSuggestion[]>([]);
   const [isLocationSearching, setIsLocationSearching] = useState(false);
   const [nearestAddress, setNearestAddress] = useState<string>("Resolving nearest address...");
+  const [selectedImageFile, setSelectedImageFile] = useState<File | null>(null);
+  const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [uploadedImageUrl, setUploadedImageUrl] = useState<string | null>(null);
   const [uiState, setUiState] = useState<FormUiState>({
     errorMessage: null,
     fieldErrors: {},
@@ -192,6 +197,81 @@ export default function EventCreateForm() {
       return [...current, normalized];
     });
     setTagInput("");
+  };
+
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) {
+      return;
+    }
+
+    // Validate file is an image
+    if (!file.type.startsWith("image/")) {
+      setUiState({
+        errorMessage: "Please select a valid image file.",
+        fieldErrors: {},
+      });
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      setUiState({
+        errorMessage: "Image must be less than 5MB.",
+        fieldErrors: {},
+      });
+      return;
+    }
+
+    setSelectedImageFile(file);
+    const previewUrl = URL.createObjectURL(file);
+    setImagePreviewUrl(previewUrl);
+  };
+
+  const clearImageSelection = () => {
+    setSelectedImageFile(null);
+    if (imagePreviewUrl) {
+      URL.revokeObjectURL(imagePreviewUrl);
+    }
+    setImagePreviewUrl(null);
+    setUploadedImageUrl(null);
+  };
+
+  const uploadImageToSupabase = async (file: File): Promise<string | null> => {
+    try {
+      const {
+        data: { user },
+        error: userError,
+      } = await supabase.auth.getUser();
+
+      if (userError || !user) {
+        throw new Error("User not authenticated");
+      }
+
+      // Create a unique filename
+      const timestamp = Date.now();
+      const random = Math.random().toString(36).substring(7);
+      const fileExtension = file.name.split(".").pop();
+      const fileName = `${timestamp}-${random}.${fileExtension}`;
+      const filePath = `event-images/${user.id}/${fileName}`;
+
+      // Upload to Supabase Storage
+      const { error: uploadError } = await supabase.storage
+        .from("events")
+        .upload(filePath, file);
+
+      if (uploadError) {
+        throw new Error(`Upload failed: ${uploadError.message}`);
+      }
+
+      // Get public URL
+      const { data } = supabase.storage.from("events").getPublicUrl(filePath);
+
+      return data.publicUrl;
+    } catch (error) {
+      console.error("Image upload error:", error);
+      throw error;
+    }
   };
 
   const removeTag = (tagToRemove: string) => {
@@ -359,6 +439,7 @@ export default function EventCreateForm() {
         lng: Number(formData.get("lng") ?? location.lng),
       },
       tags,
+      image_url: uploadedImageUrl || undefined,
     };
 
     const nextFieldErrors: FormFieldErrors = {};
@@ -416,7 +497,24 @@ export default function EventCreateForm() {
       return;
     }
 
-    const { error } = await supabase.from("events").insert({
+    // Upload image if selected but not yet uploaded
+    let imageUrl = uploadedImageUrl;
+    if (selectedImageFile && !uploadedImageUrl) {
+      try {
+        setIsUploadingImage(true);
+        imageUrl = await uploadImageToSupabase(selectedImageFile);
+        setUploadedImageUrl(imageUrl);
+      } catch (error) {
+        setUiState({
+          errorMessage: `Image upload failed: ${error instanceof Error ? error.message : "Unknown error"}`,
+          fieldErrors: {},
+        });
+        setIsUploadingImage(false);
+        return;
+      }
+    }
+
+    const insertData: any = {
       title: values.title,
       overview: values.description,
       venue_name: values.venue_name,
@@ -426,7 +524,13 @@ export default function EventCreateForm() {
       location: `POINT(${values.location.lng} ${values.location.lat})`,
       creator_id: user.id,
       external_id: 'local',
-    });
+    };
+
+    if (imageUrl) {
+      insertData.image_url = imageUrl;
+    }
+
+    const { error } = await supabase.from("events").insert(insertData);
     if (error) {
       console.error("Supabase Insert Error:", error.message);
     } else {
@@ -482,6 +586,44 @@ export default function EventCreateForm() {
               placeholder="Share details so neighbors know exactly how to help."
               className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 outline-none ring-amber-300 transition focus:ring-2"
             />
+          </div>
+
+          <div>
+            <label htmlFor="event-image" className="mb-2 block text-sm font-medium text-slate-700">
+              Event Image (Optional)
+            </label>
+            <div className="space-y-3">
+              <input
+                id="event-image"
+                name="event-image"
+                type="file"
+                accept="image/*"
+                onChange={handleImageSelect}
+                disabled={isUploadingImage}
+                className="block w-full cursor-pointer rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 file:mr-4 file:cursor-pointer file:border-0 file:rounded-full file:bg-amber-500 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-slate-950 hover:file:bg-amber-400 disabled:cursor-not-allowed disabled:opacity-70"
+              />
+              {imagePreviewUrl && (
+                <div className="relative inline-block">
+                  <img
+                    src={imagePreviewUrl}
+                    alt="Preview"
+                    className="h-24 w-24 rounded-2xl border border-slate-200 object-cover"
+                  />
+                  <button
+                    type="button"
+                    onClick={clearImageSelection}
+                    disabled={isUploadingImage}
+                    className="absolute -right-2 -top-2 rounded-full bg-red-500 p-1 text-white shadow-lg hover:bg-red-600 disabled:opacity-70"
+                    aria-label="Remove image"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+              )}
+              <p className="text-xs text-slate-500">
+                Upload a cover image for your event (max 5MB, JPG/PNG)
+              </p>
+            </div>
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2">
@@ -683,7 +825,7 @@ export default function EventCreateForm() {
         </div>
 
         <div className="mt-6">
-          <SubmitButton formId={EVENT_FORM_ID} />
+          <SubmitButton formId={EVENT_FORM_ID} isUploadingImage={isUploadingImage} />
         </div>
       </aside>
     </div>

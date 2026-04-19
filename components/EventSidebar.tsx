@@ -2,6 +2,7 @@
 
 import { Event } from "@/lib/mock-events";
 import { MapPin } from "lucide-react";
+import { useState } from "react";
 
 type Props = {
   events: Event[];
@@ -10,6 +11,8 @@ type Props = {
 };
 
 export default function EventSidebar({ events, selectedEvent, onEventClick }: Props) {
+  const [isVisible, setIsVisible] = useState(true);
+
   // Filter events to only show those after today
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -75,9 +78,10 @@ export default function EventSidebar({ events, selectedEvent, onEventClick }: Pr
         }
       `}</style>
 
-      {/* Absolute Floating Pop Sidebar */}
-      <>
-        {/* Absolute Floating Pop Sidebar */}
+      {/* Only show when scrolled to map */}
+      {isVisible && (
+        <>
+          {/* Absolute Floating Pop Sidebar */}
           <div
             className={`absolute right-5 top-12 h-[calc(100%-64px)] w-[32%] p-4 pointer-events-auto z-[9999] sidebar-enter flex flex-col`}
           >
@@ -189,6 +193,7 @@ export default function EventSidebar({ events, selectedEvent, onEventClick }: Pr
             </div>
           </div>
         </>
+      )}
     </>
   );
 }
