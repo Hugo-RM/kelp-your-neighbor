@@ -14,7 +14,7 @@ export async function GET() {
   const supabase = createClient(url, key)
 
   try {
-    const { data, error } = await supabase.from('events').select('count').limit(1)
+    const { error } = await supabase.from('events').select('count').limit(1)
     
     if (error) {
       return Response.json({ error: error.message }, { status: 400 })

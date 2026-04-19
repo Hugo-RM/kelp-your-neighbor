@@ -10,7 +10,7 @@ export default function HeroSection() {
       {/* Nav */}
       <nav className="absolute top-0 left-0 right-0 flex items-center justify-between px-8 py-5">
         <span className="text-lg font-bold tracking-tight text-emerald-800">Kelp Your Neighbor</span>
-        <a href="/login" className="rounded-full bg-emerald-600 px-5 py-2 text-sm font-semibold text-white shadow-md shadow-emerald-600/25 transition hover:bg-emerald-700">
+        <a href="/auth" className="rounded-full bg-emerald-600 px-5 py-2 text-sm font-semibold text-white shadow-md shadow-emerald-600/25 transition hover:bg-emerald-700">
           Login
         </a>
       </nav>

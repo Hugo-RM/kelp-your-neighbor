@@ -1,8 +1,10 @@
 "use client";
 
+import { useEffect, useMemo, useState } from "react";
 import { Event } from "@/lib/mock-events";
 import { TYPE_COLORS } from "@/lib/event-colors";
-import { useEffect } from "react";
+import { createClient } from "@/utils/supabase/client";
+import CarpoolSection from "./CarpoolSection";
 
 type Props = {
   event: Event | null;
@@ -10,6 +12,9 @@ type Props = {
 };
 
 export default function EventModal({ event, onClose }: Props) {
+  const supabase = useMemo(() => createClient(), []);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
@@ -17,6 +22,12 @@ export default function EventModal({ event, onClose }: Props) {
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
   }, [onClose]);
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      setCurrentUserId(user ? user.id : null);
+    });
+  }, [supabase]);
 
   if (!event) return null;
 
@@ -70,7 +81,7 @@ export default function EventModal({ event, onClose }: Props) {
           <div className="flex flex-col gap-1 text-sm text-slate-500">
             <span>{new Date(event.date + "T00:00:00").toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}</span>
             <span>{event.location}</span>
-            <span>Created by {event.createdBy}</span>
+            {/* <span>Created by {event.createdBy}</span> */}
           </div>
 
           {/* Overview */}
@@ -92,26 +103,13 @@ export default function EventModal({ event, onClose }: Props) {
             )}
           </div>
 
-          {/* CO₂ stub */}
-          {/* STUB: Phase 2 — replace with calculated value from carpool join */}
-          <div className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 border border-emerald-200 px-3 py-1.5 text-sm text-emerald-700 font-medium w-fit">
-            12.4 kg CO₂ saved by carpoolers
-          </div>
-
-          {/* Carpool stub */}
-          {/* STUB: Phase 2 — replace with real carpool data from Supabase */}
-          <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-            <h3 className="font-semibold text-slate-800 mb-1.5">Carpools</h3>
-            <p className="text-sm text-slate-400">
-              Carpool feature coming soon. Check back closer to the event.
-            </p>
-            <button
-              className="mt-3 rounded-full border border-slate-300 px-4 py-1.5 text-xs font-semibold text-slate-400 cursor-not-allowed"
-              disabled
-            >
-              Offer a ride (coming soon)
-            </button>
-          </div>
+          {/* Carpool section */}
+          <CarpoolSection
+            eventId={event.id}
+            eventLat={event.lat}
+            eventLng={event.lng}
+            currentUserId={currentUserId}
+          />
         </div>
       </div>
     </div>

@@ -13,11 +13,6 @@ interface MeetupEvent {
   };
 }
 
-interface Coordinates {
-  lat: number;
-  lng: number;
-}
-
 // Monterey, CA coordinates
 const MONTEREY_LAT = 36.6002;
 const MONTEREY_LNG = -121.8863;
@@ -179,7 +174,7 @@ async function upsertEvents(events: MeetupEvent[]): Promise<void> {
       };
 
       // Upsert into events table
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('events')
         .upsert([eventData], { onConflict: 'external_id' });
 
