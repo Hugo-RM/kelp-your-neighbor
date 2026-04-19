@@ -27,13 +27,13 @@ export default function PublicProfilePage({ params }: { params: Promise<{ id: st
   const [profile, setProfile] = useState<Profile | null>(null)
   const [loading, setLoading] = useState(true)
   const [currentUserId, setCurrentUserId] = useState<string | null>(null)
-  const [existingRating, setExistingRating] = useState<Rating | null>(null)
+  const [, setExistingRating] = useState<Rating | null>(null)
   const [score, setScore] = useState<number>(7)
   const [submitting, setSubmitting] = useState(false)
   const [submitted, setSubmitted] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [carpoolId, setCarpoolId] = useState<string | null>(null)
-  const [hasCarpooledTogether, setHasCarpooledTogether] = useState(false)
+  const [, setHasCarpooledTogether] = useState(false)
 
   useEffect(() => {
     const load = async () => {

@@ -11,7 +11,7 @@ type Props = {
 };
 
 export default function EventSidebar({ events, selectedEvent, onEventClick }: Props) {
-  const [isVisible, setIsVisible] = useState(true);
+  const [isVisible] = useState(true);
 
   // Filter events to only show those after today
   const today = new Date();
