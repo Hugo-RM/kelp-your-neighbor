@@ -5,6 +5,7 @@ import { useState, useCallback, useEffect } from "react";
 import HeroSection from "@/components/HeroSection";
 import FilterBar from "@/components/FilterBar";
 import EventModal from "@/components/EventModal";
+import EventSidebar from "@/components/EventSidebar";
 import { getEvents, BoundsFilter } from "@/lib/get-events";
 import { Event } from "@/lib/mock-events";
 
@@ -44,11 +45,18 @@ export default function Home() {
           onDateFromChange={setDateFrom}
           onDateToChange={setDateTo}
         />
-        <div className="flex-1 relative">
-          <EventMap
+        <div className="flex-1 flex overflow-hidden">
+          <div className="flex-1 relative">
+            <EventMap
+              events={events}
+              onBoundsChange={handleBoundsChange}
+              onPinClick={setSelectedEvent}
+            />
+          </div>
+          <EventSidebar
             events={events}
-            onBoundsChange={handleBoundsChange}
-            onPinClick={setSelectedEvent}
+            selectedEvent={selectedEvent}
+            onEventClick={setSelectedEvent}
           />
         </div>
       </section>
