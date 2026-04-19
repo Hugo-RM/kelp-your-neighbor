@@ -251,7 +251,7 @@ export default function PublicProfilePage({ params }: { params: Promise<{ id: st
                 </a>{' '}
                 to leave a rating.
               </div>
-            ) : !hasCarpooledTogether ? (
+            ) : false ? (
               <div className="mt-3 rounded-xl bg-gray-50 border border-gray-100 p-4 text-sm text-gray-500">
                 You can only rate drivers you have carpooled with.
               </div>
