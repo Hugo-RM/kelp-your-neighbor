@@ -425,6 +425,7 @@ export default function EventCreateForm() {
       start_time: startTimeDate.toISOString(),
       location: `POINT(${values.location.lng} ${values.location.lat})`,
       creator_id: user,
+      external_id: 'local',
     });
     if (error) {
       console.error("Supabase Insert Error:", error.message);
